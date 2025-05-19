@@ -93,6 +93,7 @@ export function Block() {
     }
 
     function determineRange() {
+        
         switch (true) {
             case frequency < 10: //frequency < 250:
                 return 1;
