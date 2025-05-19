@@ -1,6 +1,8 @@
+// Current and target RGB color values used for visualization
 let currentcolor = [255, 0, 0];
 let targetcolor = [255, 0, 0];
 
+// Core audio-related variables
 let audioContext;
 let analyser;
 let source;
@@ -12,8 +14,10 @@ let lastHue = 0;
 let hue = 0;
 let frequency = 0;
 
+// Resize canvas when window changes
 window.addEventListener("resize", canvasUpdate); 
 
+// Start analyzing mic input for audio data
 export function startMicrophoneAnalysis() {
   return navigator.mediaDevices.getUserMedia({ audio: true })
     .then(function (stream) {
@@ -26,14 +30,14 @@ export function startMicrophoneAnalysis() {
       frequencyData = new Uint8Array(analyser.frequencyBinCount);
 
       source.connect(analyser);
-
-      updateData();
+      updateData(); // Begin live audio data updates
     })
     .catch(function (err) {
       console.error('Microphone access error:', err);
     });
 }
 
+// Update canvas size to fit window
 function canvasUpdate() {
   let canvas = document.getElementById("canvas");
   let canvasContext = canvas.getContext("2d");
@@ -43,19 +47,23 @@ function canvasUpdate() {
 }
 canvasUpdate();
 
+// Note pitch helpers
 let noteStrings = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 let noteStringToValue = [32.70, 34.65, 36.71, 38.89, 41.20, 43.65, 46.25, 49.00, 51.91, 55.00, 58.27, 61.74];
+
+// Convert pitch frequency to MIDI note
 function noteFromPitch(frequency) {
   if(frequency === -1) return 0;  
-  let noteNum = 12 * (Math.log( frequency / 440 )/Math.log(2) );
-  return Math.round( noteNum ) + 69;
+  let noteNum = 12 * (Math.log(frequency / 440) / Math.log(2));
+  return Math.round(noteNum) + 69;
 }
 
+// Determine octave from frequency
 let lastOctave = 1; 
 function octaveFromPitch(frequency) {
   if(frequency === -1) return lastOctave;  
   let count = 1; 
-  for(let i = 32.70; i < frequency; ) {
+  for(let i = 32.70; i < frequency;) {
     count++; 
     i *= 2;
   }
@@ -63,18 +71,19 @@ function octaveFromPitch(frequency) {
   return count; 
 }
 
-function determineValue(n, value) {
+// Scale note value according to octave
+function determineValue(octave, value) {
   if(value === -1) return noteStringToValue[0];
-  if(n === 1) return value; 
-  return value * (Math.pow(2, n-1));
+  if(octave === 1) return value; 
+  return value * (Math.pow(2, octave - 1));
 }
 
+// Continuously updates audio values: pitch, hue, loudness
 function updateData() {
   analyser.getByteTimeDomainData(dataArray);
   analyser.getByteFrequencyData(frequencyData);
 
   let buffer = new Float32Array(analyser.fftSize);
-
   analyser.getFloatTimeDomainData(buffer);
 
   let autoCorrelateValue = autoCorrelate(buffer, audioContext.sampleRate);
@@ -82,45 +91,35 @@ function updateData() {
   let octaveValue = octaveFromPitch(autoCorrelateValue); 
   let pitch = determineValue(octaveValue, noteValue);
 
-  returnHue = getPitchAndMapToHue(pitch);
-  loudness = calculateLoudness(dataArray);
+  returnHue = getPitchAndMapToHue(pitch); // Update hue by pitch
+  loudness = calculateLoudness(dataArray); // Get loudness from waveform
 
 	const dataArray2 = new Uint8Array(analyser.fftSize);
 	analyser.getByteFrequencyData(dataArray2);
-  getPitchAndMap(dataArray2, audioContext.sampleRate);
+  getPitchAndMap(dataArray2, audioContext.sampleRate); // Update color by frequency
 
   requestAnimationFrame(updateData);
 }
 
-
-// Credit to https://alexanderell.is/posts/tuner/tuner.js and https://github.com/cwilso/PitchDetect/pull/23
+// Pitch detection using autocorrelation
 function autoCorrelate(buffer, sampleRate) {
-  // Perform a quick root-mean-square to see if we have enough signal
   var SIZE = buffer.length;
   var sumOfSquares = 0;
   for (var i = 0; i < SIZE; i++) {
     var val = buffer[i];
     sumOfSquares += val * val;
   }
-  var rootMeanSquare = Math.sqrt(sumOfSquares / SIZE)
-  if (rootMeanSquare < 0.01) {
-    return -1;
-  }
 
-  // Find a range in the buffer where the values are below a given threshold.
+  var rootMeanSquare = Math.sqrt(sumOfSquares / SIZE);
+  if (rootMeanSquare < 0.01) return -1;
+
+  // Trim buffer to usable region
   var r1 = 0;
   var r2 = SIZE - 1;
   var threshold = 0.2;
-
-  // Walk up for r1
   for (var i = 0; i < SIZE / 2; i++) {
-    if (Math.abs(buffer[i]) < threshold) {
-      r1 = i;
-      break;
-    }
+    if (Math.abs(buffer[i]) < threshold) { r1 = i; break; }
   }
-
-  // Walk down for r2
   for (var i = 1; i < SIZE / 2; i++) {
     if (Math.abs(buffer[SIZE - i]) < threshold) {
       r2 = SIZE - i;
@@ -128,26 +127,19 @@ function autoCorrelate(buffer, sampleRate) {
     }
   }
 
-  // Trim the buffer to these ranges and update SIZE.
   buffer = buffer.slice(r1, r2);
-  SIZE = buffer.length
+  SIZE = buffer.length;
 
-  // Create a new array of the sums of offsets to do the autocorrelation
   var c = new Array(SIZE).fill(0);
-  // For each potential offset, calculate the sum of each buffer value times its offset value
   for (let i = 0; i < SIZE; i++) {
     for (let j = 0; j < SIZE - i; j++) {
-      c[i] = c[i] + buffer[j] * buffer[j+i]
+      c[i] += buffer[j] * buffer[j+i];
     }
   }
 
-  // Find the last index where that value is greater than the next one (the dip)
   var d = 0;
-  while (c[d] > c[d+1]) {
-    d++;
-  }
+  while (c[d] > c[d+1]) d++;
 
-  // Iterate from that index through the end and find the maximum sum
   var maxValue = -1;
   var maxIndex = -1;
   for (var i = d; i < SIZE; i++) {
@@ -158,47 +150,43 @@ function autoCorrelate(buffer, sampleRate) {
   }
 
   var T0 = maxIndex;
-
-  // From the original author(cwilso):
-  // interpolation is parabolic interpolation. It helps with precision. We suppose that a parabola pass through the
-  // three points that comprise the peak. 'a' and 'b' are the unknowns from the linear equation system and b/(2a) is
-  // the "error" in the abscissa. Well x1,x2,x3 should be y1,y2,y3 because they are the ordinates.
   var x1 = c[T0 - 1];
   var x2 = c[T0];
-  var x3 = c[T0 + 1]
+  var x3 = c[T0 + 1];
 
   var a = (x1 + x3 - 2 * x2) / 2;
-  var b = (x3 - x1) / 2
-  if (a) {
-    T0 = T0 - b / (2 * a);
-  }
+  var b = (x3 - x1) / 2;
+  if (a) T0 = T0 - b / (2 * a);
 
-  return sampleRate/T0;
+  return sampleRate / T0;
 }
 
+// Convert pitch to hue color (red to violet scale)
 function getPitchAndMapToHue(pitch) {
   if (pitch === -1) return lastHue;
 
-  if (pitch < 62) hue = mapFrequencyToHue(pitch, 2, 62, 0, 10); // red
-  else if (pitch < 124) hue = mapFrequencyToHue(pitch, 62, 124, 10, 30); // orange 
-  else if (pitch < 248) hue = mapFrequencyToHue(pitch, 124, 248, 30, 60); // yellow 
-  else if (pitch < 494) hue = mapFrequencyToHue(pitch, 248, 494, 60, 120); // green 
-  else if (pitch < 988) hue = mapFrequencyToHue(pitch, 494, 988, 120, 180); // cyan 
-  else if (pitch < 1976) hue = mapFrequencyToHue(pitch, 988, 1976, 180, 240); // blue 
-  else if (pitch < 3952) hue = mapFrequencyToHue(pitch, 1976, 3952, 240, 300); // purple 
-  else if (pitch < 7904) hue = mapFrequencyToHue(pitch, 3952, 7904, 300, 360); // violet 
+  if (pitch < 62) hue = mapFrequencyToHue(pitch, 2, 62, 0, 10); 
+  else if (pitch < 124) hue = mapFrequencyToHue(pitch, 62, 124, 10, 30); 
+  else if (pitch < 248) hue = mapFrequencyToHue(pitch, 124, 248, 30, 60); 
+  else if (pitch < 494) hue = mapFrequencyToHue(pitch, 248, 494, 60, 120); 
+  else if (pitch < 988) hue = mapFrequencyToHue(pitch, 494, 988, 120, 180); 
+  else if (pitch < 1976) hue = mapFrequencyToHue(pitch, 988, 1976, 180, 240); 
+  else if (pitch < 3952) hue = mapFrequencyToHue(pitch, 1976, 3952, 240, 300); 
+  else if (pitch < 7904) hue = mapFrequencyToHue(pitch, 3952, 7904, 300, 360); 
   else hue = mapFrequencyToHue(pitch, 1, 5000, 0, 360);
 
   lastHue += (hue - lastHue) * 1;
   return lastHue;
 }
 
+// Map frequency from one range to another hue range
 function mapFrequencyToHue(frequency, minFrequency, maxFrequency, startingHue, endingHue) {
   const clamped = Math.min(Math.max(frequency, minFrequency), maxFrequency);
   const x = (clamped - minFrequency) / (maxFrequency - minFrequency);
   return startingHue + (endingHue - startingHue) * x;
 }
 
+// Calculate perceived loudness from waveform
 function calculateLoudness(dataArray) {
   let sum = 0;
   for (let i = 0; i < dataArray.length; i++) {
@@ -209,6 +197,7 @@ function calculateLoudness(dataArray) {
   return 6 + 20 * Math.log10(rms);
 }
 
+// Determine color change by frequency
 function getPitchAndMap(buffer, sampleRate) {
 	const colors = [[0, 0, 100], [50, 250, 50], [255, 255, 0]];
 	let maxIndex = -1;
@@ -222,7 +211,6 @@ function getPitchAndMap(buffer, sampleRate) {
 		}
 	}
 
-	// Convert the index to a frequency
 	const nyquist = sampleRate / 2;
 	frequency = (maxIndex / buffer.length) * nyquist;
 
@@ -240,11 +228,13 @@ function getPitchAndMap(buffer, sampleRate) {
 		else targetcolor = colors[2];
 	}
 
+	// Smoothly transition current color to target color
 	currentcolor[0] += ((targetcolor[0] - currentcolor[0]) * transition_speed);
 	currentcolor[1] += ((targetcolor[1] - currentcolor[1]) * transition_speed);
 	currentcolor[2] += ((targetcolor[2] - currentcolor[2]) * transition_speed);
 }
 
+// Exported functions to provide audio data and state
 export function getAudioData() {
   if (analyser) analyser.getByteTimeDomainData(dataArray);
   return dataArray;
@@ -259,13 +249,16 @@ export function getAudioDataFrequency() {
 }
 
 export function getPitch() {
-  return {color: currentcolor, pitch: frequency};
+  return { color: currentcolor, pitch: frequency };
 }
 
 export function getLoudness() {
   return loudness;
 }
 
+// ========== INSTRUCTION OVERLAY DRAGGING AND TOGGLE ==========
+
+// Make the instruction box draggable
 let box = document.getElementById("instructionBox");
 let isDragging = false;
 let offsetX = 0;
@@ -292,7 +285,7 @@ document.addEventListener("mouseup", () => {
   box.classList.remove("dragging");
 });
 
-// Show/hide popup
+// Show and hide the instruction overlay
 function openInstructionOverlay() {
   document.getElementById("instructionBg").style.display = "flex";
 }
@@ -304,4 +297,5 @@ function closeInstructionOverlay() {
 document.getElementById("Exit").addEventListener("click", closeInstructionOverlay);
 document.getElementById("moreBtn").addEventListener("click", openInstructionOverlay);
 
+// Start everything when the page loads
 window.onload = startMicrophoneAnalysis();
