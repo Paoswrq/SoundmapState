@@ -93,8 +93,6 @@ export function Block() {
     }
 
     function determineRange() {
-        console.log(frequency);
-        //dk why the frequency is not going to the expected range. 
         switch (true) {
             case frequency < 10: //frequency < 250:
                 return 1;
