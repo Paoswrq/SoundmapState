@@ -218,7 +218,7 @@ function getPitchAndMap(buffer, sampleRate) {
 	const maxFrequency = 1000; 
 
 	if (frequency < minFrequency) {
-		transition_speed = 0.1;
+		transition_speed = 0.05;
 		targetcolor = [150,150,150];
 	}
 	else {
@@ -258,33 +258,6 @@ export function getLoudness() {
 
 // ========== INSTRUCTION OVERLAY DRAGGING AND TOGGLE ==========
 
-// Make the instruction box draggable
-let box = document.getElementById("instructionBox");
-let isDragging = false;
-let offsetX = 0;
-let offsetY = 0;
-
-box.addEventListener("mousedown", (e) => {
-  isDragging = true;
-  box.classList.add("dragging");
-  offsetX = e.clientX - box.offsetLeft;
-  offsetY = e.clientY - box.offsetTop;
-});
-
-document.addEventListener("mousemove", (e) => {
-  if (isDragging) {
-    const newLeft = Math.max(0, Math.min(window.innerWidth - box.offsetWidth, e.clientX - offsetX));
-    const newTop = Math.max(0, Math.min(window.innerHeight - box.offsetHeight, e.clientY - offsetY));
-    box.style.left = `${newLeft}px`;
-    box.style.top = `${newTop}px`;
-  }
-});
-
-document.addEventListener("mouseup", () => {
-  isDragging = false;
-  box.classList.remove("dragging");
-});
-
 // Show and hide the instruction overlay
 function openInstructionOverlay() {
   document.getElementById("instructionBg").style.display = "flex";
@@ -296,6 +269,16 @@ function closeInstructionOverlay() {
 
 document.getElementById("Exit").addEventListener("click", closeInstructionOverlay);
 document.getElementById("moreBtn").addEventListener("click", openInstructionOverlay);
+
+document.getElementById('instructionBox').addEventListener('mouseenter', () => {
+  document.querySelector('.instructionBox .display').style.display = 'block';
+  document.querySelector('.instructionBox .arrow').style.display = 'none';
+});
+
+document.getElementById('instructionBox').addEventListener('mouseleave', () => {
+  document.querySelector('.instructionBox .display').style.display = 'none';
+  document.querySelector('.instructionBox .arrow').style.display = 'block';
+});
 
 // Start everything when the page loads
 window.onload = startMicrophoneAnalysis();

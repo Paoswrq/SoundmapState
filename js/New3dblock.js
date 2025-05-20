@@ -141,18 +141,14 @@ export function Block() {
         const newCube = new THREE.Mesh(geometry, sharedMaterial);
         newCube.lookAt(camera.position);
         newCube.position.z = 1;
-        newCube.position.x = (Math.random() - 0.5) * visibleWidth;
 
-        let p = getPitch().pitch;
-        if (p < 130) {
-            newCube.position.x = (Math.random() - 0.5) * visibleWidth * 0.3;
-        } else if (p < 400) {
-            newCube.position.x = (Math.random() - 0.5) * visibleWidth * 0.3 + visibleWidth * 0.3;
+        if(Math.random() < 0.5) {
+            newCube.position.x = (Math.random() - 0.5) * visibleWidth - visibleWidth * 1.2;
         } else {
-            newCube.position.x = (Math.random() - 0.5) * visibleWidth * 0.3 + visibleWidth * 0.6;
+            newCube.position.x = (Math.random() - 0.5) * -visibleWidth + visibleWidth * 1.2;
         }
-
-        newCube.position.y = visibleHeight * 10;
+        
+        newCube.position.y = visibleHeight * 15;
         newCube.castShadow = true;
         newCube.receiveShadow = true;
         scene.add(newCube);
@@ -257,5 +253,5 @@ export function disposeBlock() {
     camera = null;
     renderer = null;
     geometry = null;
-    material = null;
+    sharedMaterial = null;
 }

@@ -9,12 +9,15 @@
 <body>
     <canvas id="canvas"></canvas>
 
-    <div class="instructionBox" id="instructionBox">
-    <h1>Explanation</h1>
-    <p>
-      Welcome to Soundmap! As you can see on the screen, dynamic visuals are responding in real time. These visuals are generated based on the sounds around you—including your own voice! They react to different sound properties like frequency and loudness. You can press the keys [1], [2], or [3] to switch between different visual modules. By default, the modules automatically cycle every 10 seconds, creating a constantly evolving experience. 
-      <span class="moreBtn" id="moreBtn">Press here for more</span>
-    </p>
+   <div class="instructionBox" id="instructionBox">
+    <div class="display">
+      <h1>Explanation</h1>
+      <p>
+        Welcome to Soundmap! As you can see on the screen, dynamic visuals are responding in real time. These visuals are generated based on the sounds around you—including your own voice! They react to different sound properties like frequency and loudness. You can press the keys [1], [2], or [3] to switch between different visual modules. By default, the modules automatically cycle every 10 seconds, creating a constantly evolving experience. 
+        <span class="moreBtn" id="moreBtn">Press here for more</span>
+      </p>
+    </div>
+    <div class="arrow">&lt; <br> &lt; <br> &lt; </div>
   </div>
 
   <div class="instructionBg" id="instructionBg">
@@ -25,7 +28,7 @@
       </div>
       <div class="InstructionBody">
         <p><strong>Soundmap</strong> is an interactive sound visualizer that responds in real time to both ambient sounds and direct input like your voice or keyboard. It features three unique visual modes—<strong>Waveform</strong>, <strong>Fireburst</strong>, and <strong>3D Blocks</strong>—which automatically rotate every 10 seconds. Each mode offers a distinct vibe: <em>Waveform</em> draws smooth, flowing lines that trace the shape of the sound; <em>Fireburst</em> was originally meant to resemble an explosion, but I’ve come to like its bubbling, energetic feel even more; and <em>3D Blocks</em> gives a sense of motion and depth, as if you’re flying through a tunnel of blocks—or they’re flying toward you.</p>
-        <p>The pitch of your input—whether spoken or from the keyboard—directly affects the color of the visuals. Higher pitches generate brighter hues, while lower pitches result in deeper tones. What's more, the background color is dynamically set to the <em>inverse</em> of the main color, creating a vibrant contrast that enhances the experience. Try pressing keys on your keyboard to see how each one lights up the screen with a different color, guided by the letter and color overlay on the visual.</p> 
+        <p>The pitch of your input—whether spoken or from the keyboard—directly affects the color of the visuals. Higher pitches generate brighter hues, while lower pitches result in deeper tones. What's more, the background color is dynamically set to the <em>inverse</em> of the main color, creating a vibrant contrast that enhances the experience. The color will gradually fade to gray if no pitch is detected. Try pressing keys on the piano to see how each one lights up the screen with a different color, guided by the letter and color overlay on the visual.</p> 
         <p>In quiet environments, you can speak or make soft sounds (like tapping the laptop) to activate the visualizer. If a loud sound exceeds the volume threshold, the auto-switching timer resets—so you’ll have to wait 10 seconds from that moment for the next mode change. Enjoy exploring the sound and color of your surroundings with Soundmap!</p>
       </div>
     </div>
