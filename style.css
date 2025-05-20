@@ -11,7 +11,7 @@ body {
 
 .instructionBox {
   position: fixed;
-  width: clamp(250px, 30vw, 310px);
+  width: clamp(250px, 30vw, 400px);
   max-width: 90vw;
   padding: 1rem;
   background-color: rgba(70, 130, 180, 0.75);
@@ -32,7 +32,7 @@ body {
 }
 
 .instructionBox:hover {
-  transform: translateX(-18vw); 
+  transform: translateX(-24vw); 
   opacity: 1;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
