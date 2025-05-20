@@ -26,7 +26,7 @@ class Particles {
   update() {
     this.x += this.dx;
     this.y += this.dy;
-    this.opacity -= 0.02; // Gradually fade out
+    this.opacity -= 0.015; // Gradually fade out
   }
   draw() {
     ctx.globalAlpha = this.opacity;
